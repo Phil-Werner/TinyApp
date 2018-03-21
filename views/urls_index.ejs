@@ -8,9 +8,12 @@
   <ul>
 
     <% for (var prop in urls) { %>
-
-    <li> <%= urls[prop] %>  - <%= prop %> </li>
-    <% }  %>
+      <li> <%= urls[prop] %> - <%= prop %> <a href="/urls/<%=prop %>"> Edit </a>
+        <form method="POST" action="/urls/<%= prop %>/delete">
+          <button type="submit">Delete</button>
+        </form>
+      </li>
+      <% }  %>
 
 
   </ul>

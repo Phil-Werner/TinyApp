@@ -29,6 +29,21 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+app.post("/urls/:id", (req, res) => {
+  urlDatabase[req.params.id] = req.body['newLongURL'];
+  //console.log(req.params.id);
+  //console.log(req.body['newLongURL']);
+  res.redirect('/urls/' + req.params.id);
+
+});
+
+app.post("/urls/:id/delete", (req, res) => {
+
+  //console.log(req.params.id);
+  delete urlDatabase[req.params.id];
+  res.redirect('/urls/');
+})
+
 app.post("/urls", (req, res) => {
 
   let long = req.body;
@@ -65,8 +80,8 @@ function generateRandomString() {
   let outputString = "";
 
   for (var x = 0; x < 6; x++) {
-    let y = Math.round(Math.random() * 62);
-    outputString += arrayOfAlphaNum[y];
+    let index = Math.round(Math.random() * 62);
+    outputString += arrayOfAlphaNum[index];
   }
 
   return outputString;
