@@ -9,8 +9,14 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
 
 var urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": {
+  url: "http://www.lighthouselabs.ca",
+  userID: "userRandomID"
+  },
+  "9sm5xK": {
+  url: "http://www.google.com",
+  userID: "user2RandomID"
+  }
 };
 
 const users = {
@@ -32,7 +38,18 @@ app.get("/", (req, res) => {
 
 app.get("/urls", (req, res) => {
   //console.log(users[req.cookies["user_id"]]);
-  let templateVars = { user: users[req.cookies["user_id"]], urls: urlDatabase };
+  let currentUserId = req.cookies.user_id;
+
+  console.log(currentUserId);
+
+  if (!users[currentUserId]) {
+    res.status(400).send("Sorry, must login before you can visit this page.");
+    return;
+  }
+
+  let userUrls = urlsForUser(currentUserId);
+  let templateVars = { user: users[req.cookies["user_id"]], urls: userUrls };
+
   // console.log(templateVars);
   // console.log(users[req.cookies["user_id"]]);
   // console.log(req.cookies["user_id"]);
@@ -41,8 +58,18 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  let templateVars = { user: users[req.cookies["user_id"]]};
-  res.render("urls_new");
+  let currentUserId = req.cookies.user_id;
+
+  if (!users[currentUserId]) {
+    res.redirect("/login");
+  } else {
+
+    let templateVars = { user: users[req.cookies["user_id"]]};
+    //console.log(req.cookies);
+    //console.log(templateVars);
+
+    res.render("urls_new", templateVars);
+  }
 });
 
 app.get("/register", (req, res) => {
@@ -97,35 +124,62 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
+  let currentUserId = req.cookies.user_id;
+
+  if (!users[currentUserId]) {
+    res.status(400).send("Sorry, you must log in before you can visit this page.");
+    return;
+  }
+
+  if (users[currentUserId]["id"] !== urlDatabase[req.params.id]["userID"]) {
+    res.status(400).send("Sorry, you cannot modify or view urls that you did not create");
+    return;
+  }
+
   let templateVars = { user: users[req.cookies["user_id"]], shortURL: req.params.id, urls:urlDatabase };
   res.render("urls_show", templateVars);
 });
 
 app.post("/urls/:id", (req, res) => {
-  urlDatabase[req.params.id] = req.body['newLongURL'];
+  //urlDatabase[req.params.id] = {};
+
+  if (urlDatabase[req.params.id]["userID"] === (req.cookies["user_id"])) {
+
+    urlDatabase[req.params.id]["url"] = req.body['newLongURL'];
+    res.redirect('/urls/' + req.params.id);
+  } else {
+
+    res.status(400).send("Sorry, you can only edit your own URLs");
+  }
+
+  //urlDatabase[req.params.id]["userID"] = req.cookies["user_id"];
   //console.log(req.params.id);
   //console.log(req.body['newLongURL']);
-  res.redirect('/urls/' + req.params.id);
-
 });
 
 app.post("/urls/:id/delete", (req, res) => {
 
   //console.log(req.params.id);
-  delete urlDatabase[req.params.id];
-  res.redirect('/urls/');
-})
+  if (req.cookies["user_id"] === urlDatabase[req.params.id]["userID"]) {
+    delete urlDatabase[req.params.id];
+    res.redirect('/urls/');
+  } else {
+    res.status(400).send("Sorry, you can only delete your own URLs");
+  }
+});
 
 app.post("/urls", (req, res) => {
 
   let long = req.body;
   let longValue = long.longURL;
   let shortValue = generateRandomString();
-  urlDatabase[shortValue] = longValue;
+  urlDatabase[shortValue] = {};
+  urlDatabase[shortValue]["url"] = longValue;
+  urlDatabase[shortValue]["userID"] = req.cookies["user_id"];
   //console.log(urlDatabase);
                           // debug statement to see POST parameters
   //res.send("Ok");         // Respond with 'Ok' (we will replace this)
-
+  //console.log(urlDatabase);
   res.redirect('/urls/' + shortValue);
 });
 
@@ -140,7 +194,7 @@ app.post("/login", (req, res) => {
 
         if (users[elm]["password"] === loginPassword) {
           res.cookie('user_id', users[elm]["id"]);
-          res.redirect('/');
+          res.redirect('/urls');
           return;
         } else {
           res.status(403).send("Wrong password!  Try again!");
@@ -165,9 +219,8 @@ app.post("/login", (req, res) => {
 
 app.get("/logout", (req, res) => {
 
-
   res.clearCookie('user_id');
-  res.redirect('/urls/');
+  res.redirect('/login');
 });
 
 app.get("/urls.json", (req, res) => {
@@ -180,7 +233,7 @@ app.get("/hello", (req, res) => {
 
 app.get("/u/:shortURL", (req, res) => {
   let short = req.params.shortURL;
-  let longURL = urlDatabase[short];
+  let longURL = urlDatabase[short]["url"];
   res.redirect(longURL);
 });
 
@@ -199,3 +252,16 @@ function generateRandomString() {
 
   return outputString;
 }
+
+function urlsForUser(id) {
+
+  let outputObj = {};
+  for (elm in urlDatabase) {
+    if (urlDatabase[elm]["userID"] === id) {
+      outputObj[elm] = urlDatabase[elm]
+    }
+  }
+  return outputObj;
+}
+
+//console.log(urlsForUser("user2RandomID"));
