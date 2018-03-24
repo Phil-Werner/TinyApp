@@ -3,21 +3,24 @@
 <head>
   <% include ./partials/_header.ejs %>
 </head>
-<body>
+<body style="font-size:20px; padding:50px;">
 
   <ul>
 
     <li> ShortURL: <%= shortURL %>
 
-      <form action="/urls/<%= shortURL %>" method="POST" style="margin:150px;">
+      <form action="/urls/<%= shortURL %>" method="POST" >
 
+        <li> <%= urls[shortURL]["url"] %>
         <input id="newLongURL" type="text" name="newLongURL" placeholder= <%= urls[shortURL]["url"] %> style="width: 300px">
         <input type="submit" value="Update">
       </form>
 
   </ul>
 
-  <a href=" "> Shorten a new URL </a>
+  <a href="/urls/new "> Shorten a new URL </a>
+  <br>
+  <a href="/urls"> List all your URLs </a>
 
 </body>
 </html>

@@ -3,22 +3,22 @@
 <head>
    <% include ./partials/_header.ejs %>
 </head>
-<body>
+<body style="font-size:20px; padding:50px;">
 
   <ul>
 
     <% for (var prop in urls) { %>
       <li> <%= urls[prop]["url"] %> - <%= prop %> <a href="/urls/<%=prop %>"> Edit </a>
-        <form method="POST" action="/urls/<%= prop %>/delete">
-          <button type="submit">Delete</button>
-        </form>
+      <form method="POST" action="/urls/<%= prop %>/delete">
+        <button type="submit">Delete</button>
+      </form>
       </li>
       <% }  %>
 
 
   </ul>
 
-  <a href=" "> Shorten a new URL </a>
+  <a href="/urls/new "> Shorten a new URL </a>
 
 </body>
 </html>
